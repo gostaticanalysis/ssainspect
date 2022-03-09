@@ -1,0 +1,4 @@
+Block 0
+println("hello":string)
+println("world":string)
+return

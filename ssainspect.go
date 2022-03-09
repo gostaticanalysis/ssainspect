@@ -1,6 +1,8 @@
 package ssainspect
 
-import "golang.org/x/tools/go/ssa"
+import (
+	"golang.org/x/tools/go/ssa"
+)
 
 type Inspector struct {
 	cycleBlocks map[*ssa.BasicBlock]struct{}
@@ -14,6 +16,8 @@ type Inspector struct {
 
 func New(funcs []*ssa.Function) *Inspector {
 	return &Inspector{
+		funcIndex: -1,
+		instrIndex: -1,
 		cycleBlocks: make(map[*ssa.BasicBlock]struct{}),
 		done:        make(map[*ssa.BasicBlock]struct{}),
 		funcs:       funcs,
@@ -21,20 +25,15 @@ func New(funcs []*ssa.Function) *Inspector {
 }
 
 func (in *Inspector) Next() bool {
-	if in.skiped {
-		return false
-	}
 
 	// first call
-	if in.funcIndex == 0 && in.instrIndex == 0 {
+	if in.funcIndex < 0 && in.instrIndex < 0 {
 		in.block = in.firstBlock()
-		if in.block == nil {
-			return false
-		}
+		return in.block != nil
 	}
 
 	in.instrIndex++
-	if in.instrIndex < len(in.block.Instrs) {
+	if in.instrIndex >= len(in.block.Instrs) {
 		in.instrIndex = 0
 		in.nextBlock()
 		if in.block == nil {
@@ -46,12 +45,14 @@ func (in *Inspector) Next() bool {
 }
 
 func (in *Inspector) firstBlock() *ssa.BasicBlock {
+	in.funcIndex = 0
 	for len(in.Function().Blocks) == 0 {
 		in.funcIndex++
 	}
 	if in.funcIndex >= len(in.funcs) {
 		return nil
 	}
+	in.instrIndex = 0
 	return in.Function().Blocks[0]
 }
 
@@ -62,7 +63,7 @@ func (in *Inspector) nextBlock() {
 	}
 
 	if len(in.block.Succs) > 0 {
-		next := in.bool.Succs[0]
+		next := in.block.Succs[0]
 		if !in.hasDone(next) {
 			in.addPre(in.block)
 			in.block = next
@@ -123,7 +124,7 @@ func (in *Inspector) hasDone(b *ssa.BasicBlock) bool {
 	return ok
 }
 
-func (in *Inspector) addPre(b *ssa.BasicBlock) bool {
+func (in *Inspector) addPre(b *ssa.BasicBlock) {
 	in.pre = append(in.pre, nil)
 	copy(in.pre[1:], in.pre)
 	in.pre[0] = b
