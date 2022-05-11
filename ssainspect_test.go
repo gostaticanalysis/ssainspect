@@ -51,10 +51,11 @@ func run(pass *analysis.Pass) (interface{}, error) {
 	var buf bytes.Buffer
 
 	for inspect.Next() {
-		if inspect.InstrIndex() == 0 {
-			fmt.Fprintln(&buf, "Block", inspect.Block())
+		cur := inspect.Cursor()
+		if cur.InstrIndex == 0 {
+			fmt.Fprintln(&buf, "Block", cur.Block)
 		}
-		fmt.Fprintln(&buf, inspect.Instr())
+		fmt.Fprintln(&buf, cur.Instr)
 	}
 
 	return &buf, nil

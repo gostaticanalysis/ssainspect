@@ -1,9 +1,59 @@
 package ssainspect
 
 import (
+	"github.com/gostaticanalysis/analysisutil"
 	"golang.org/x/tools/go/ssa"
 )
 
+type Cursor struct {
+	Path       []*Cursor
+	Func       *ssa.Function
+	Block      *ssa.BasicBlock
+	Instr      ssa.Instruction
+	InstrIndex int
+}
+
+type Inspector struct {
+	cursors []*Cursor
+	idx     int
+}
+
+func New(funcs []*ssa.Function) *Inspector {
+	in := &Inspector{
+		idx: -1,
+	}
+	//var path []*Cursor
+	analysisutil.InspectFuncs(funcs, func(i int, instr ssa.Instruction) bool {
+		c := &Cursor{
+			Func:       instr.Parent(),
+			Block:      instr.Block(),
+			InstrIndex: i,
+			Instr:      instr,
+		}
+
+		in.cursors = append(in.cursors, c)
+		return true
+	})
+
+	return in
+}
+
+func (in *Inspector) Next() bool {
+	in.idx++
+	if in.idx >= len(in.cursors) {
+		return false
+	}
+	return true
+}
+
+func (in *Inspector) Cursor() *Cursor {
+	if in.idx < 0 || in.idx >= len(in.cursors) {
+		return nil
+	}
+	return in.cursors[in.idx]
+}
+
+/*
 type Inspector struct {
 	cycleBlocks map[*ssa.BasicBlock]struct{}
 	funcs       []*ssa.Function
@@ -16,8 +66,8 @@ type Inspector struct {
 
 func New(funcs []*ssa.Function) *Inspector {
 	return &Inspector{
-		funcIndex: -1,
-		instrIndex: -1,
+		funcIndex:   -1,
+		instrIndex:  -1,
 		cycleBlocks: make(map[*ssa.BasicBlock]struct{}),
 		done:        make(map[*ssa.BasicBlock]struct{}),
 		funcs:       funcs,
@@ -148,3 +198,22 @@ func (in *Inspector) Instr() ssa.Instruction {
 func (in *Inspector) InstrIndex() int {
 	return in.instrIndex
 }
+
+func (in *Inspector) InCycle() bool {
+	if _, ok := in.cycleBlocks[in.Block()]; ok {
+		return ok
+	}
+
+	done := make(map[*ssa.BasicBlock]bool)
+	var walk func(b *ssa.BasicBlock)
+	walk = func(b *ssa.BasicBlock) bool {
+		if len(b.Succs) == 0 {
+			return false
+		}
+		if done[b] {
+			return true
+		}
+		done[b] = true
+	}
+}
+*/
