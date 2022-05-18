@@ -52,10 +52,10 @@ func run(pass *analysis.Pass) (interface{}, error) {
 
 	for inspect.Next() {
 		cur := inspect.Cursor()
-		if cur.InstrIndex == 0 {
-			fmt.Fprintln(&buf, "Block", cur.Block)
+		if cur.FirstInstr() {
+			fmt.Fprintln(&buf, "Block", cur.Block, "InCycle=", cur.InCycle())
 		}
-		fmt.Fprintln(&buf, cur.Instr)
+		fmt.Fprintln(&buf, "\t", cur.Instr)
 	}
 
 	return &buf, nil
