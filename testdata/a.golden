@@ -1,3 +1,4 @@
+Func a.f
 Block 0 InCycle= false
 	 println("hello":string)
 	 println("world":string)
