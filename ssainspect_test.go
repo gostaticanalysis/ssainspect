@@ -2,16 +2,18 @@ package ssainspect_test
 
 import (
 	"bytes"
+	"errors"
 	"flag"
 	"fmt"
 	"reflect"
 	"testing"
 
-	"github.com/gostaticanalysis/ssainspect"
 	"github.com/gostaticanalysis/testutil"
 	"github.com/tenntenn/golden"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/analysistest"
+
+	"github.com/gostaticanalysis/ssainspect"
 )
 
 var flagUpdate bool
@@ -24,7 +26,11 @@ func TestInspectorWithAnalyzer(t *testing.T) {
 	testdata := testutil.WithModules(t, analysistest.TestData(), nil)
 
 	rs := analysistest.Run(t, testdata, testAnalyzer, "a")
-	buf := rs[0].Result.(*bytes.Buffer)
+	buf, ok := rs[0].Result.(*bytes.Buffer)
+	if !ok {
+		t.Fatal("unexpected error")
+	}
+
 	if flagUpdate {
 		golden.Update(t, analysistest.TestData(), "a", buf)
 		return
@@ -45,8 +51,11 @@ var testAnalyzer = &analysis.Analyzer{
 	ResultType: reflect.TypeOf((*bytes.Buffer)(nil)),
 }
 
-func run(pass *analysis.Pass) (interface{}, error) {
-	inspect := pass.ResultOf[ssainspect.Analyzer].(*ssainspect.Inspector)
+func run(pass *analysis.Pass) (any, error) {
+	inspect, ok := pass.ResultOf[ssainspect.Analyzer].(*ssainspect.Inspector)
+	if !ok {
+		return nil, errors.New("failed to type assert to *ssainspect.Inspector")
+	}
 
 	var buf bytes.Buffer
 
