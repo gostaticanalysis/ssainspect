@@ -51,7 +51,7 @@ var testAnalyzer = &analysis.Analyzer{
 	ResultType: reflect.TypeOf((*bytes.Buffer)(nil)),
 }
 
-func run(pass *analysis.Pass) (interface{}, error) {
+func run(pass *analysis.Pass) (any, error) {
 	inspect, ok := pass.ResultOf[ssainspect.Analyzer].(*ssainspect.Inspector)
 	if !ok {
 		return nil, errors.New("failed to type assert to *ssainspect.Inspector")
