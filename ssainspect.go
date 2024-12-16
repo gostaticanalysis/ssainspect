@@ -1,6 +1,8 @@
 package ssainspect
 
 import (
+	"iter"
+
 	"github.com/gostaticanalysis/analysisutil"
 	"golang.org/x/tools/go/ssa"
 )
@@ -34,41 +36,16 @@ func (c *Cursor) InCycle() bool {
 	return false
 }
 
-type Inspector struct {
-	cursors []*Cursor
-	idx     int
-}
-
-func New(funcs []*ssa.Function) *Inspector {
-	in := &Inspector{
-		idx: -1,
+func All(funcs []*ssa.Function) iter.Seq[*Cursor] {
+	return func(yield func(*Cursor) bool) {
+		analysisutil.InspectFuncs(funcs, func(i int, instr ssa.Instruction) bool {
+			c := &Cursor{
+				Func:       instr.Parent(),
+				Block:      instr.Block(),
+				InstrIndex: i,
+				Instr:      instr,
+			}
+			return yield(c)
+		})
 	}
-	analysisutil.InspectFuncs(funcs, func(i int, instr ssa.Instruction) bool {
-		c := &Cursor{
-			Func:       instr.Parent(),
-			Block:      instr.Block(),
-			InstrIndex: i,
-			Instr:      instr,
-		}
-
-		in.cursors = append(in.cursors, c)
-		return true
-	})
-
-	return in
-}
-
-func (in *Inspector) Next() bool {
-	in.idx++
-	if in.idx >= len(in.cursors) {
-		return false
-	}
-	return true
-}
-
-func (in *Inspector) Cursor() *Cursor {
-	if in.idx < 0 || in.idx >= len(in.cursors) {
-		return nil
-	}
-	return in.cursors[in.idx]
 }

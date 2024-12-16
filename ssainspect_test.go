@@ -5,6 +5,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"iter"
 	"reflect"
 	"testing"
 
@@ -43,24 +44,23 @@ func TestInspectorWithAnalyzer(t *testing.T) {
 
 var testAnalyzer = &analysis.Analyzer{
 	Name: "testssainspect",
-	Doc:  "test analyzer for ssainspect.Inspector",
+	Doc:  "test analyzer for ssainspect.All",
 	Run:  run,
 	Requires: []*analysis.Analyzer{
 		ssainspect.Analyzer,
 	},
-	ResultType: reflect.TypeOf((*bytes.Buffer)(nil)),
+	ResultType: reflect.TypeFor[*bytes.Buffer](),
 }
 
 func run(pass *analysis.Pass) (any, error) {
-	inspect, ok := pass.ResultOf[ssainspect.Analyzer].(*ssainspect.Inspector)
+	seq, ok := pass.ResultOf[ssainspect.Analyzer].(iter.Seq[*ssainspect.Cursor])
 	if !ok {
-		return nil, errors.New("failed to type assert to *ssainspect.Inspector")
+		return nil, errors.New("failed to get result of ssainspect.Analyzer")
 	}
 
 	var buf bytes.Buffer
 
-	for inspect.Next() {
-		cur := inspect.Cursor()
+	for cur := range seq {
 		if cur.FirstInstr() {
 			fmt.Fprintln(&buf, "Block", cur.Block, "InCycle=", cur.InCycle())
 		}
