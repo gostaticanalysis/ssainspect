@@ -62,6 +62,9 @@ func run(pass *analysis.Pass) (any, error) {
 
 	for cur := range seq {
 		if cur.FirstInstr() {
+			if cur.FirstBlock() {
+				fmt.Fprintln(&buf, "Func", cur.Func)
+			}
 			fmt.Fprintln(&buf, "Block", cur.Block, "InCycle=", cur.InCycle())
 		}
 		fmt.Fprintln(&buf, "\t", cur.Instr)

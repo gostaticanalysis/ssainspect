@@ -18,6 +18,10 @@ func (c *Cursor) FirstInstr() bool {
 	return c.InstrIndex == 0
 }
 
+func (c *Cursor) FirstBlock() bool {
+	return c.Block.Index == 0
+}
+
 func (c *Cursor) InCycle() bool {
 	done := make(map[*ssa.BasicBlock]struct{})
 	blocks := []*ssa.BasicBlock{c.Block}
