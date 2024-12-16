@@ -7,6 +7,7 @@ import (
 	"golang.org/x/tools/go/ssa"
 )
 
+// Cursor holds the current function, block and instruction in iteration by [All].
 type Cursor struct {
 	Func       *ssa.Function
 	Block      *ssa.BasicBlock
@@ -14,22 +15,25 @@ type Cursor struct {
 	InstrIndex int
 }
 
-func (c *Cursor) FirstInstr() bool {
-	return c.InstrIndex == 0
+// FirstInstr returns whether cur.Instruction is a first instruction in the block.
+func (cur *Cursor) FirstInstr() bool {
+	return cur.InstrIndex == 0
 }
 
-func (c *Cursor) FirstBlock() bool {
-	return c.Block.Index == 0
+// FirstBlock returns whether cur.Block is a first block in the function.
+func (cur *Cursor) FirstBlock() bool {
+	return cur.Block.Index == 0
 }
 
-func (c *Cursor) InCycle() bool {
+// InCycle returns whether the block is in cycle (loop).
+func (cur *Cursor) InCycle() bool {
 	done := make(map[*ssa.BasicBlock]struct{})
-	blocks := []*ssa.BasicBlock{c.Block}
+	blocks := []*ssa.BasicBlock{cur.Block}
 	for len(blocks) > 0 {
 		b := blocks[0]
 		blocks = blocks[1:]
 		if _, ok := done[b]; ok {
-			if b == c.Block {
+			if b == cur.Block {
 				return true
 			}
 			continue
@@ -40,6 +44,7 @@ func (c *Cursor) InCycle() bool {
 	return false
 }
 
+// All returns an iterator which inspects all SSA functions, basic blocks and instructions.
 func All(funcs []*ssa.Function) iter.Seq[*Cursor] {
 	return func(yield func(*Cursor) bool) {
 		analysisutil.InspectFuncs(funcs, func(i int, instr ssa.Instruction) bool {
