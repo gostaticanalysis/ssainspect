@@ -1,14 +1,14 @@
 Block 0 InCycle= false
 	 println("hello":string)
 	 println("world":string)
-	 jump 3
-Block 3 InCycle= true
-	 phi [0: 0:int, 1: t3] #i
-	 t4 < 10:int
-	 if t5 goto 1 else 2
+	 jump 1
 Block 1 InCycle= true
+	 phi [0: 0:int, 2: t5] #i
+	 t2 < 10:int
+	 if t3 goto 2 else 3
+Block 2 InCycle= true
 	 println("hi":string)
-	 t4 + 1:int
-	 jump 3
-Block 2 InCycle= false
+	 t2 + 1:int
+	 jump 1
+Block 3 InCycle= false
 	 return
