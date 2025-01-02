@@ -1,5 +1,8 @@
 # Changelog
 
+## [v0.3.0](https://github.com/gostaticanalysis/ssainspect/compare/v0.2.0...v0.3.0) - 2025-01-02
+- Fix Analyzer bug by @tenntenn in https://github.com/gostaticanalysis/ssainspect/pull/8
+
 ## [v0.2.0](https://github.com/gostaticanalysis/ssainspect/compare/v0.1.0...v0.2.0) - 2024-12-16
 - Add (*Cursor).FirstBlock by @tenntenn in https://github.com/gostaticanalysis/ssainspect/pull/5
 - Add document coments by @tenntenn in https://github.com/gostaticanalysis/ssainspect/pull/7
