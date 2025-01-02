@@ -2,6 +2,7 @@ package ssainspect
 
 import (
 	"iter"
+	"slices"
 
 	"github.com/gostaticanalysis/analysisutil"
 	"golang.org/x/tools/go/ssa"
@@ -39,9 +40,27 @@ func (cur *Cursor) InCycle() bool {
 			continue
 		}
 		done[b] = struct{}{}
-		blocks = append(b.Succs, blocks...)
+		blocks = append(slices.Clone(b.Succs), blocks...)
 	}
 	return false
+}
+
+// Inspector provides an iterator which iterats all SSA functions, basic blocks and instructions.
+type Inspector struct {
+	cursors []*Cursor
+}
+
+// New creates [Inspector].
+func New(funcs []*ssa.Function) *Inspector {
+	return &Inspector{
+		cursors: slices.Collect(All(funcs)),
+	}
+}
+
+// All returns an iterator which inspects all SSA functions, basic blocks and instructions.
+// The iteration result is cached in [Inspector].
+func (i *Inspector) All() iter.Seq[*Cursor] {
+	return slices.Values(i.cursors)
 }
 
 // All returns an iterator which inspects all SSA functions, basic blocks and instructions.
