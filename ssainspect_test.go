@@ -5,7 +5,6 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"iter"
 	"reflect"
 	"testing"
 
@@ -26,19 +25,24 @@ func init() {
 func TestInspectorWithAnalyzer(t *testing.T) {
 	testdata := testutil.WithModules(t, analysistest.TestData(), nil)
 
-	rs := analysistest.Run(t, testdata, testAnalyzer, "a")
-	buf, ok := rs[0].Result.(*bytes.Buffer)
-	if !ok {
-		t.Fatal("unexpected error")
-	}
+	pkgs := []string{"a", "b"}
 
-	if flagUpdate {
-		golden.Update(t, analysistest.TestData(), "a", buf)
-		return
-	}
+	rs := analysistest.Run(t, testdata, testAnalyzer, pkgs...)
 
-	if diff := golden.Diff(t, analysistest.TestData(), "a", buf); diff != "" {
-		t.Error(diff)
+	for i, pkg := range pkgs {
+		buf, ok := rs[i].Result.(*bytes.Buffer)
+		if !ok {
+			t.Fatal("unexpected error")
+		}
+
+		if flagUpdate {
+			golden.Update(t, analysistest.TestData(), pkg, buf)
+			continue
+		}
+
+		if diff := golden.Diff(t, analysistest.TestData(), pkg, buf); diff != "" {
+			t.Error(diff)
+		}
 	}
 }
 
@@ -53,14 +57,14 @@ var testAnalyzer = &analysis.Analyzer{
 }
 
 func run(pass *analysis.Pass) (any, error) {
-	seq, ok := pass.ResultOf[ssainspect.Analyzer].(iter.Seq[*ssainspect.Cursor])
+	inspector, ok := pass.ResultOf[ssainspect.Analyzer].(*ssainspect.Inspector)
 	if !ok {
 		return nil, errors.New("failed to get result of ssainspect.Analyzer")
 	}
 
 	var buf bytes.Buffer
 
-	for cur := range seq {
+	for cur := range inspector.All() {
 		if cur.FirstInstr() {
 			if cur.FirstBlock() {
 				fmt.Fprintln(&buf, "Func", cur.Func)

@@ -2,7 +2,6 @@ package ssainspect
 
 import (
 	"errors"
-	"iter"
 	"reflect"
 
 	"golang.org/x/tools/go/analysis"
@@ -11,12 +10,12 @@ import (
 
 var Analyzer = &analysis.Analyzer{
 	Name: "ssainspect",
-	Doc:  "make iter.Seq[*ssainspect.Cursor]",
+	Doc:  "make an Inspector",
 	Run:  runAnalyzer,
 	Requires: []*analysis.Analyzer{
 		buildssa.Analyzer,
 	},
-	ResultType: reflect.TypeFor[iter.Seq[*Cursor]](),
+	ResultType: reflect.TypeFor[*Inspector](),
 }
 
 func runAnalyzer(pass *analysis.Pass) (any, error) {
@@ -24,5 +23,5 @@ func runAnalyzer(pass *analysis.Pass) (any, error) {
 	if !ok {
 		return nil, errors.New("failed to get result of buildssa.Analyzer")
 	}
-	return All(ssa.SrcFuncs), nil
+	return New(ssa.SrcFuncs), nil
 }
